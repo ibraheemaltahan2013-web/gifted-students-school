@@ -362,7 +362,8 @@ export default function AdminUsers() {
               error={errors.password}
               placeholder="••••••••"
               leftIcon={<Shield className="w-5 h-5 text-gray-400" />}
-            </div>
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="الدور"
