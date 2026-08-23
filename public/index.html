@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدرسة موهوبين نينوى - بيئة التواصل التعليمية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #444;
+        }
+
+        /* Navigation */
+        nav {
+            background: linear-gradient(90deg, #2c3e50 0, #4ca1af 100%);
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #2c3e50;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #e8e8e8;
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile {
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .user-profile span {
+            margin-left: 10px;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Main Content */
+        main {
+            margin-top: 80px;
+            padding: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .welcome-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .welcome-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 5px;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .card p {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Messages Area */
+        .messages-area {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            height: 500px;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .message {
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.teacher {
+            background: #ebf5fb;
+            color: #2c3e50;
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        .message.student {
+            background: #d5f4e3;
+            color: #2c3e50;
+            margin-right: auto;
+            margin-left: 0;
+        }
+
+        .message meta {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            animation: modalIn 0.3s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 1.5rem;
+            color: #777;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-links {
+                margin-top: 10px;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .nav-links a {
+                margin: 0 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <div class="logo-icon">📚</div>
+                <span>مدرسة موهوبين نينوى</span>
+            </a>
+            <div class="nav-links">
+                <a href="#dashboard">الرئيسية</a>
+                <a href="#classes">الفصول</a>
+                <a href="#announcements">إعلانات</a>
+                <a href="#messages">الرسائل</a>
+            </div>
+            <div class="nav-user">
+                <span id="userName" class="user-profile">مرحباً</span>
+                <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="mainContent">
+        <!-- Welcome Section -->
+        <section class="welcome-section" id="welcomeSection">
+            <h2>مرحباً في منصة التواصل التعليمي</h2>
+            <p>تطبيق مدرسة موهوبين نينوى يسهل التواصل بين الطلاب والمعلمين وأولياء الأمور.</p>
+            <div class="cards-grid">
+                <div class="card" onclick="showSection('dashboard')">
+                    <div class="card-icon">📊</div>
+                    <h3>لوحة التحكم</h3>
+                    <p>عرض الملخص السريع للمessages والأنشطة</p>
+                </div>
+                <div class="card" onclick="showSection('classes')">
+                    <div class="card-icon">🏫</div>
+                    <h3>الفصول الدراسية</h3>
+                    <p>عرض ومتابعة الفصول الدراسية</p>
+                </div>
+                <div class="card" onclick="showSection('announcements')">
+                    <div class="card-icon">📢</div>
+                    <h3>الإعلانات</h3>
+                    <p>قراءة ونشر الإعلامات الهامة</p>
+                </div>
+                <div class="card" onclick="showSection('messages')">
+                    <div class="card-icon">💬</div>
+                    <h3>الرسائل</h3>
+                    <p>إرسال واستقبال الرسائل الخاصة</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section class="messages-area" id="dashboard" style="display: none;">
+            <h2>لوحة التحكم</h2>
+            <div class="tabs">
+                <div class="tab active">النشاط الأخير</div>
+                <div class="tab">الإعلانات الجديدة</div>
+                <div class="tab">المهام القادمة</div>
+            </div>
+            <div id="dashboardContent">
+                <p>جاري التحميل...</p>
+            </div>
+        </section>
+
+        <!-- Classes Section -->
+        <section class="messages-area" id="classes" style="display: none;">
+            <h2>إدارة الفصول الدراسية</h2>
+            <div class="tabs">
+                <div class="tab active">قائمة الفصول</div>
+                <div class="tab">انشاء فصل</div>
+            </div>
+            <div id="classesContent">
+                <p>جاري التحميل...</p>
+            </div>
+        </section>
+
+        <!-- Announcements Section -->
+        <section class="messages-area" id="announcements" style="display: none;">
+            <h2>الإعلانات والمنشورات</h2>
+            <div class="tabs">
+                <div class="tab active">جميع الإعلانات</div>
+                <div class="tab">نشر إعلان جديد</div>
+            </div>
+            <div id="announcementsContent">
+                <p>جاري التحميل...</p>
+            </div>
+        </section>
+
+        <!-- Messages Section -->
+        <section class="messages-area" id="messages" style="display: none;">
+            <h2>الرسائل الخاصة</h2>
+            <div class="tabs">
+                <div class="tab active">رسائل الطلاب</div>
+                <div class="tab">رسائل المعلمين</div>
+            </div>
+            <div class="form-group">
+                <input type="text" id="messageRecipient" placeholder="اسم المرسل أو المستقبل">
+                <input type="text" id="messageContent" placeholder="اكتب رسالتك هنا">
+            </div>
+            <button class="btn" onclick="sendMessage()">إرسال الرسالة</button>
+            <div id="messagesContent">
+                <!-- Messages will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Homework Section -->
+        <section class="messages-area" id="homework" style="display: none;">
+            <h2>المهام المنزلية</h2>
+            <div class="tabs">
+                <div class="tab active">جميع المهام</div>
+                <div class="tab">إضافة مهمة جديدة</div>
+            </div>
+            <div id="homeworkContent">
+                <p>جاري التحميل...</p>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section class="messages-area" id="profile" style="display: none;">
+            <h2>الملف الشخصي</h2>
+            <div class="form-group">
+                <label>اسم المستخدم</label>
+                <input type="text" id="profileName" placeholder="اسمك الكامل">
+            </div>
+            <div class="form-group">
+                <label>رقم الجوال</label>
+                <input type="tel" id="profilePhone" placeholder="رقم الهاتف">
+            </div>
+            <div class="form-group">
+                <label>الدور</label>
+                <select id="profileRole">
+                    <option value="student">طالب</option>
+                    <option value="teacher">معلم</option>
+                    <option value="admin">إدارة</option>
+                </select>
+            </div>
+            <button class="btn" onclick="saveProfile()">حفظ التغييرات</button>
+        </section>
+    </main>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeLogin()">&times;</span>
+            <h2>تسجيل الدخول</h2>
+            <div class="form-group">
+                <label>اسم المستخدم</label>
+                <input type="text" id="loginUsername" placeholder="ادخل اسمك">
+            </div>
+            <div class="form-group">
+                <label>الدور</label>
+                <div style="display: flex; gap: 15px;">
+                    <button onclick="setLoginRole('student')" class="btn btn-secondary">طالب</button>
+                    <button onclick="setLoginRole('teacher')" class="btn btn-secondary">معلم</button>
+                    <button onclick="setLoginRole('admin')" class="btn btn-secondary">إدارة</button>
+                </div>
+            </div>
+            <button class="btn" onclick="login()">الدخول للمنصة</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize application state
+        let currentUser = null;
+        let currentRole = 'student';
+        let messages = [];
+        let announcements = [];
+        let classes = [];
+        let homework = [];
+
+        // Show/hide sections
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('#mainContent section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Update welcome section
+            document.getElementById('welcomeSection').style.display = 'none';
+            
+            // Load content based on section
+            loadSectionContent(sectionId);
+        }
+
+        function loadSectionContent(sectionId) {
+            const contentDiv = document.getElementById(sectionId + 'Content');
+            
+            switch(sectionId) {
+                case 'dashboard':
+                    contentDashboard(contentDiv);
+                    break;
+                case 'classes':
+                    contentClasses(contentDiv);
+                    break;
+                case 'announcements':
+                    contentAnnouncements(contentDiv);
+                    break;
+                case 'messages':
+                    contentMessages(contentDiv);
+                    break;
+                case 'homework':
+                    contentHomework(contentDiv);
+                    break;
+                case 'profile':
+                    contentProfile(contentDiv);
+                    break;
+            }
+        }
+
+        // Dashboard content
+        function contentDashboard(div) {
+            div.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: #3498db; color: white; padding: 20px; border-radius: 10px;">
+                        <h3>32</h3>
+                        <p>رسائل جديدة</p>
+                    </div>
+                    <div style="background: #27ae60; color: white; padding: 20px; border-radius: 10px;">
+                        <h3>5</h3>
+                        <p>مهام جديدة</p>
+                    </div>
+                    <div style="background: #e67e22; color: white; padding: 20px; border-radius: 10px;">
+                        <h3>12</h3>
+                        <p>إعلانات</p>
+                    </div>
+                    <div style="background: #9b59b6; color: white; padding: 20px; border-radius: 10px;">
+                        <h3>8</h3>
+                        <p>فصول</p>
+                    </div>
+                </div>
+                <p style="color: #7f8c8d;">مرحباً بك في لوحة التحكم. استخدم الأقسام العلوية للتنقل بين الخدمات.</p>
+            `;
+        }
+
+        // Classes content
+        function contentClasses(div) {
+            if (classes.length === 0) {
+                classes = [
+                    { id: 1, name: "صف موهوب 1", students: 25, teacher: "أستاذ أحمد", level: "رياضيات" },
+                    { id: 2, name: "صف موهوب 2", students: 28, teacher: "أستاذة سعاد", level: "علوم" },
+                    { id: 3, name: "صف موهوب 3", students: 22, teacher: "أستاذ خالد", level: "لغة إنجليزية" }
+                ];
+            }
+            
+            let html = `<div style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="showAddClassForm()">إضافة فصل جديد</button>
+            </div>`;
+            
+            html += `<table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead>
+                    <tr style="background: #3498db; color: white;">
+                        <th style="padding: 10px;">اسم الفصل</th>
+                        <th style="padding: 10px;">المعلم</th>
+                        <th style="padding: 10px;">الطلاب</th>
+                        <th style="padding: 10px;">المادة</th>
+                        <th style="padding: 10px;">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            classes.forEach(cls => {
+                html += `<tr>
+                    <td style="padding: 10px;">${cls.name}</td>
+                    <td style="padding: 10px;">${cls.teacher}</td>
+                    <td style="padding: 10px;">${cls.students} طالب</td>
+                    <td style="padding: 10px;">${cls.level}</td>
+                    <td style="padding: 10px;">
+                        <button style="background: #3498db; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.7rem;"> تفاصيل</button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table>`;
+            div.innerHTML = html;
+        }
+
+        function showAddClassForm() {
+            // Show modal or form
+            alert("سيتم فتح نموذج إضافة الفصل الدراسي");
+        }
+
+        // Announcements content
+        function contentAnnouncements(div) {
+            if (announcements.length === 0) {
+                announcements = [
+                    { id: 1, title: "عيد ميلاد سعيد", text: "تهانينا لجميع الطلاب بمناسبة العيد", date: "2024-01-15", by: "إدارة المدرسة" },
+                    { id: 2, title: "اختبارات الفصل", text: "تبدأ الاختبارات الأسبوع القادم", date: "2024-01-10", by: "أستاذ خالد" },
+                    { id: 3, title: "عودة المدرسة", text: "يسرنا عودة الطلاب غداً", date: "2024-01-05", by: "إدارة المدرسة" }
+                ];
+            }
+            
+            let html = `<div style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="showAddAnnouncementForm()">نشر إعلان جديد</button>
+            </div>`;
+            
+            html += `<div style="max-height: 300px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #3498db; color: white;">
+                            <th style="padding: 10px;">العنوان</th>
+                            <th style="padding: 10px;">التاريخ</th>
+                            <th style="padding: 10px;">من قبل</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            
+            announcements.forEach(ann => {
+                html += `<tr>
+                    <td style="padding: 10px;"><strong>${ann.title}</strong></td>
+                    <td style="padding: 10px;">${ann.date}</td>
+                    <td style="padding: 10px;">${ann.by}</td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table></div>`;
+            div.innerHTML = html;
+        }
+
+        function showAddAnnouncementForm() {
+            // Simple prompt
+            const title = prompt("عنوان الإعلان:");
+            if (title) {
+                alert(`تم نشر الإعلان: ${title}`);
+            }
+        }
+
+        // Messages content
+        function contentMessages(div) {
+            if (messages.length === 0) {
+                messages = [
+                    { id: 1, sender: "أستاذ علي", receiver: "طالب محمد", text: "مرحباً بك في فصل الرياضيات", time: "منذ 2 ساعة", role: "teacher" },
+                    { id: 2, sender: "طالب أحمد", receiver: "أستاذ سعاد", text: "شكراً على الشرح المفصل", time: "منذ 5 ساعة", role: "student" },
+                    { id: 3, sender: "أستاذ خالد", receiver: "جميع الطلاب", text: "تذكير: تسليم الواجب غداً", time: "منذ أمس", role: "teacher" }
+                ];
+            }
+            
+            let html = `<div style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="showSendMessageForm()">رسالة جديدة</button>
+            </div>`;
+            
+            html += `<div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>`;
+            
+            messages.forEach(msg => {
+                const cls = msg.role === "teacher" ? "teacher" : "student";
+                html += `<tr>
+                    <td style="padding: 12px; border: 1px solid #eee; border-radius: 8px; ${cls === 'teacher' ? 'background: #ebf5fb;' : 'background: #d5f4e3;'}; color: #2c3e50;">
+                        <strong>${msg.sender}</strong> → ${msg.receiver}<br>
+                        ${msg.text}
+                        <div style="font-size: 0.7rem; color: #888; margin-top: 4px;">${msg.time}</div>
+                    </td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table></div>`;
+            div.innerHTML = html;
+        }
+
+        function showSendMessageForm() {
+            // Show simple form or prompt
+            const recipient = prompt("اسم المستقبل:");
+            if (recipient) {
+                const content = prompt("محتوى الرسالة:");
+                if (content) {
+                    addMessage("أنت", recipient, content);
+                    alert("تم إرسال الرسالة بنجاح");
+                }
+            }
+        }
+
+        function addMessage(sender, receiver, text) {
+            messages.unshift({ id: Date.now(), sender, receiver, text, time: "هذا الحين", role: currentRole });
+            loadSectionContent('messages');
+        }
+
+        // Homework content
+        function contentHomework(div) {
+            if (homework.length === 0) {
+                homework = [
+                    { id: 1, title: "واجب الرياضيات", subject: "رياضيات", teacher: "أستاذ أحمد", deadline: "2024-01-20", status: "غير متأخر", description: "حل تمرينات الصفحة ٥٠-٦٠" },
+                    { id: 2, title: "بحث علمي", subject: "علوم", teacher: "أستاذة سعاد", deadline: "2024-01-25", status: "قريب", description: "ابحث عن النظام الشمسي وقدم تقرير" }
+                ];
+            }
+            
+            let html = `<div style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="showAddHomeworkForm()">إضافة مهمة جديدة</button>
+            </div>`;
+            
+            html += `<table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead>
+                    <tr style="background: #3498db; color: white;">
+                        <th style="padding: 10px;">المهمة</th>
+                        <th style="padding: 10px;">المادة</th>
+                        <th style="padding: 10px;">المعلم</th>
+                        <th style="padding: 10px;">الموعد</th>
+                        <th style="padding: 10px;">الحالة</th>
+                        <th style="padding: 10px;">التفاصيل</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            homework.forEach(hw => {
+                html += `<tr>
+                    <td style="padding: 10px;"><strong>${hw.title}</strong></td>
+                    <td style="padding: 10px;">${hw.subject}</td>
+                    <td style="padding: 10px;">${hw.teacher}</td>
+                    <td style="padding: 10px;">${hw.deadline}</td>
+                    <td style="padding: 10px; color: ${hw.status === "غير متأخر" ? "#27ae60" : "#e67e22";};">
+                        ${hw.status}
+                    </td>
+                    <td style="padding: 10px;">${hw.description}</td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table>`;
+            div.innerHTML = html;
+        }
+
+        function showAddHomeworkForm() {
+            const title = prompt("عنوان المهمة:");
+            if (title) {
+                alert(`تم إضافة المهمة: ${title}`);
+            }
+        }
+
+        // Profile content
+        function contentProfile(div) {
+            if (currentUser) {
+                document.getElementById('profileName').value = currentUser.name;
+                document.getElementById('profilePhone').value = currentUser.phone || '';
+                document.getElementById('profileRole').value = currentUser.role;
+            }
+        }
+
+        // Authentication functions
+        function setLoginRole(role) {
+            currentRole = role;
+            document.querySelectorAll('.btn-secondary').forEach(btn => {
+                btn.style.background = role === btn.getAttribute('data-role') ? '#3498db' : '#95a5a6';
+            });
+        }
+
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            if (!username) {
+                alert('الاسم مطلوب');
+                return;
+            }
+            
+            currentUser = {
+                id: Date.now(),
+                name: username,
+                role: currentRole,
+                phone: ''
+            };
+            
+            // Hide login modal
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('welcomeSection').style.display = 'none';
+            
+            // Show dashboard
+            document.getElementById('mainContent').style.display = 'block';
+            showSection('dashboard');
+            
+            // Update UI
+            document.getElementById('userName').textContent = `مرحباً ${username}`;
+        }
+
+        function logout() {
+            currentUser = null;
+            currentRole = 'student';
+            messages = [];
+            announcements = [];
+            classes = [];
+            homework = [];
+            
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('welcomeSection').style.display = 'block';
+            document.getElementById('loginModal').style.display = 'block';
+            
+            // Reset form
+            document.getElementById('loginUsername').value = '';
+        }
+
+        function setRole(role) {
+            currentRole = role;
+        }
+
+        function sendMessage() {
+            const recipient = document.getElementById('messageRecipient').value;
+            const content = document.getElementById('messageContent').value;
+            
+            if (!recipient || !content) {
+                alert('يرجى ملء جميع الحقول');
+                return;
+            }
+            
+            addMessage(currentUser.name, recipient, content);
+            document.getElementById('messageRecipient').value = '';
+            document.getElementById('messageContent').value = '';
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('profileName').value;
+            const phone = document.getElementById('profilePhone').value;
+            const role = document.getElementById('profileRole').value;
+            
+            if (name) {
+                currentUser.name = name;
+                currentUser.phone = phone;
+                currentUser.role = role;
+                alert('تم حفظ الملف الشخصي بنجاح');
+            } else {
+                alert('الاسم مطلوب');
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show login modal by default
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('welcomeSection').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
