@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { scheduleAPI, classAPI } from '../../services/api';
-import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
-import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import { useForm } from '../../hooks/useForm';
+import { useAuth } from '../context/AuthContext';
+import { scheduleAPI, classAPI } from '../services/api';
+import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Avatar from '../components/ui/Avatar';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import { useForm } from '../hooks/useForm';
 import { 
   Calendar, Clock, BookOpen, Building2, User, Plus, 
   Edit, Trash2, Eye, Loader2, Search, ChevronRight
 } from 'lucide-react';
-import { cn } from '../../utils/helpers';
+import { cn } from '../utils/helpers';
 
 const daysOfWeek = [
   { value: 0, label: 'الأحد', short: 'أحد' },

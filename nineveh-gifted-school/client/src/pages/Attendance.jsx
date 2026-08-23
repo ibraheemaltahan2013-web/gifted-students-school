@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { attendanceAPI, classAPI } from '../../services/api';
-import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
-import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import { useForm } from '../../hooks/useForm';
+import { useAuth } from '../context/AuthContext';
+import { attendanceAPI, classAPI } from '../services/api';
+import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Avatar from '../components/ui/Avatar';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import { useForm } from '../hooks/useForm';
 import { 
   CheckSquare, Calendar, Filter, Plus, Search, 
   Loader2, Users, Download, Edit, Trash2, Eye, ChevronRight
 } from 'lucide-react';
-import { formatDate, getAttendanceStatusLabel, getAttendanceStatusColor, cn } from '../../utils/helpers';
+import { formatDate, getAttendanceStatusLabel, getAttendanceStatusColor, cn } from '../utils/helpers';
 
 const statusOptions = [
   { value: 'PRESENT', label: 'حاضر', color: 'success' },

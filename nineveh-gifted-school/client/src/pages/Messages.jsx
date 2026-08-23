@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
-import { messageAPI } from '../../services/api';
-import Card, { CardContent } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
-import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import { useForm } from '../../hooks/useForm';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import { messageAPI } from '../services/api';
+import Card, { CardContent } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Avatar from '../components/ui/Avatar';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import { useForm } from '../hooks/useForm';
 import { 
   MessageSquare, Search, Plus, X, Loader2, 
   Bell, UserPlus, ChevronRight, Check, Clock
 } from 'lucide-react';
-import { formatDate, relativeTime, getInitials, cn } from '../../utils/helpers';
+import { formatDate, relativeTime, getInitials, cn } from '../utils/helpers';
 
 export default function Messages() {
   const { user } = useAuth();

@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { classAPI, userAPI } from '../../services/api';
-import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
-import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import { useForm } from '../../hooks/useForm';
+import { useAuth } from '../context/AuthContext';
+import { classAPI, userAPI } from '../services/api';
+import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Avatar from '../components/ui/Avatar';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import { useForm } from '../hooks/useForm';
 import { 
   ArrowLeft, Users, GraduationCap, Building2, Mail, Phone,
   Plus, Search, MoreVertical, Edit, Trash2, Eye, Loader2
 } from 'lucide-react';
-import { formatDate, getInitials, getRoleLabel, getRoleColor, cn } from '../../utils/helpers';
+import { formatDate, getInitials, getRoleLabel, getRoleColor, cn } from '../utils/helpers';
 
 export default function ClassDetail() {
   const { id } = useParams();

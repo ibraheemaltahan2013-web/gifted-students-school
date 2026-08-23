@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { classAPI, announcementAPI, assignmentAPI, messageAPI, attendanceAPI, examAPI, scheduleAPI } from '../../services/api';
-import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
+import { useAuth } from '../context/AuthContext';
+import { classAPI, announcementAPI, assignmentAPI, messageAPI, attendanceAPI, examAPI, scheduleAPI } from '../services/api';
+import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Avatar from '../components/ui/Avatar';
 import { 
   GraduationCap, FileText, MessageSquare, CheckSquare, 
   Award, Calendar, Bell, Users, Clock, BookOpen,
   TrendingUp, ArrowRight, Plus, Eye, Edit
 } from 'lucide-react';
-import { formatDate, relativeTime, getRoleLabel, getRoleColor, cn } from '../../utils/helpers';
+import { formatDate, relativeTime, getRoleLabel, getRoleColor, cn } from '../utils/helpers';
 
 const statCards = [
   { name: 'صفوفي', href: '/classes', icon: GraduationCap, color: 'bg-blue-500', countKey: 'myClasses' },

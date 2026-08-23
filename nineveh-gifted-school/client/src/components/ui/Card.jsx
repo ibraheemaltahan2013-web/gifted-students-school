@@ -47,3 +47,4 @@ export function CardFooter({ children, className = '', ...props }) {
     </div>
   );
 }
+export default Card;

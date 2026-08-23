@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { announcementAPI } from '../../services/api';
-import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
-import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import { useForm } from '../../hooks/useForm';
+import { useAuth } from '../context/AuthContext';
+import { announcementAPI } from '../services/api';
+import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Avatar from '../components/ui/Avatar';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import { useForm } from '../hooks/useForm';
 import { 
   Plus, Bell, Edit, Trash2, Eye, MoreVertical, 
   Loader2, Users, Shield, User, ChevronDown
 } from 'lucide-react';
-import { formatDate, relativeTime, getRoleLabel, getRoleColor, cn } from '../../utils/helpers';
+import { formatDate, relativeTime, getRoleLabel, getRoleColor, cn } from '../utils/helpers';
 
 export default function Announcements() {
   const { user } = useAuth();

@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { assignmentAPI } from '../../services/api';
-import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
-import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import { useForm } from '../../hooks/useForm';
+import { useAuth } from '../context/AuthContext';
+import { assignmentAPI } from '../services/api';
+import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Avatar from '../components/ui/Avatar';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import { useForm } from '../hooks/useForm';
 import { 
   ArrowLeft, FileText, Clock, Calendar, User, CheckCircle, 
   AlertCircle, Upload, Download, Edit, Trash2, Eye, 
   Loader2, Paperclip, MessageSquare, Star
 } from 'lucide-react';
-import { formatDate, relativeTime, getAssignmentStatusLabel, getAssignmentStatusColor, cn } from '../../utils/helpers';
+import { formatDate, relativeTime, getAssignmentStatusLabel, getAssignmentStatusColor, cn } from '../utils/helpers';
 
 export default function AssignmentDetail() {
   const { id } = useParams();

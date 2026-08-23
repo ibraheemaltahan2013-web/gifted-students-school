@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
-import Avatar from '../ui/Avatar';
-import Badge from '../ui/Badge';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import Avatar from '../components/ui/Avatar';
+import Badge from '../components/ui/Badge';
 import {
   LayoutDashboard, Users, BookOpen, Bell, MessageSquare,
   Calendar, Clock, FileText, CheckSquare, Award,
   Settings, LogOut, Menu, X, ChevronDown, Shield,
   GraduationCap, Building2, UserPlus
 } from 'lucide-react';
-import { getRoleLabel, getRoleColor } from '../../utils/helpers';
+import { getRoleLabel, getRoleColor } from '../utils/helpers';
 
 const navigation = [
   { name: 'لوحة التحكم', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'] },

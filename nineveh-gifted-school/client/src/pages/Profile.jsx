@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { authAPI } from '../../services/api';
-import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
-import Input from '../../components/ui/Input';
-import { useForm } from '../../hooks/useForm';
+import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
+import Card, { CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Avatar from '../components/ui/Avatar';
+import Input from '../components/ui/Input';
+import { useForm } from '../hooks/useForm';
 import { 
   User, Mail, Phone, Lock, Shield, Settings, 
   Camera, Save, AlertCircle, CheckCircle, Eye, EyeOff
 } from 'lucide-react';
-import { getRoleLabel, getRoleColor, cn, generateAvatarColor, getInitials } from '../../utils/helpers';
+import { getRoleLabel, getRoleColor, cn, generateAvatarColor, getInitials } from '../utils/helpers';
 
 export default function Profile() {
   const { user, updateProfile, changePassword, refreshUser } = useAuth();

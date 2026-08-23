@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
-import { messageAPI } from '../../services/api';
-import Card, { CardContent } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Avatar from '../../components/ui/Avatar';
-import Input from '../../components/ui/Input';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import { messageAPI } from '../services/api';
+import Card, { CardContent } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Avatar from '../components/ui/Avatar';
+import Input from '../components/ui/Input';
 import { 
   ArrowLeft, Send, Paperclip, Smile, MoreVertical,
   Check, CheckCheck, Clock, Loader2, Image, FileText
 } from 'lucide-react';
-import { formatTime, getInitials, cn } from '../../utils/helpers';
+import { formatTime, getInitials, cn } from '../utils/helpers';
 
 export default function Conversation() {
   const { userId } = useParams();
