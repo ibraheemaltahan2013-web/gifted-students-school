@@ -28,7 +28,7 @@ export default function Profile() {
     handleSubmit: handleProfileSubmit,
     setValues: setProfileValues
   } = useForm({
-    initialValues: { fullName: user?.fullName || '', email: user?.email || '', phone: user?.phone || '' },
+    initialValues: { fullName: user?.fullName || '', email: user?.email || '' },
     validate: (values) => {
       const errs = {};
       if (!values.fullName.trim()) errs.fullName = 'الاسم الكامل مطلوب';
@@ -187,16 +187,6 @@ export default function Profile() {
               onBlur={handleProfileBlur}
               error={profileErrors.email}
               leftIcon={<Mail className="w-5 h-5 text-gray-400" />}
-            />
-            <Input
-              label="رقم الهاتف"
-              type="tel"
-              name="phone"
-              value={profileValues.phone}
-              onChange={handleProfileChange}
-              onBlur={handleProfileBlur}
-              placeholder="07XXXXXXXX"
-              leftIcon={<Phone className="w-5 h-5 text-gray-400" />}
             />
             <div className="pt-4 border-t border-gray-100">
               <Button type="submit" className="w-full sm:w-auto" loading={saving}>
