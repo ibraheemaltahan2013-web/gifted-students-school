@@ -31,7 +31,7 @@ export default function AdminUsers() {
   const [updating, setUpdating] = useState(false);
 
   const { values, errors, handleChange, handleBlur, handleSubmit, resetForm, setFieldError, setValues } = useForm({
-    initialValues: { fullName: '', email: '', password: '', role: 'STUDENT' },
+    initialValues: { fullName: '', email: '', password: '', role: 'STUDENT', gender: '', phone: '' },
     validate: (values) => {
       const errs = {};
       if (!values.fullName.trim()) errs.fullName = 'الاسم الكامل مطلوب';
@@ -297,7 +297,31 @@ export default function AdminUsers() {
                 {roles.map(r => <option key={r} value={r}>{getRoleLabel(r)}</option>)}
               </select>
             </Input>
+            <Input
+              label="الجنس"
+              name="gender"
+              value={values.gender}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="اختر"
+            >
+              <select name="gender" value={values.gender} onChange={handleChange} onBlur={handleBlur} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer">
+                <option value="">اختر الجنس</option>
+                <option value="MALE">ذكر</option>
+                <option value="FEMALE">أنثى</option>
+              </select>
+            </Input>
           </div>
+          <Input
+            label="رقم الهاتف"
+            type="tel"
+            name="phone"
+            value={values.phone}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="07XXXXXXXX"
+            leftIcon={<Phone className="w-5 h-5 text-gray-400" />}
+          />
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>إلغاء</Button>
             <Button type="submit" loading={creating}>{editingUser ? 'تحديث' : 'حفظ'}</Button>
@@ -353,7 +377,31 @@ export default function AdminUsers() {
                 {roles.map(r => <option key={r} value={r}>{getRoleLabel(r)}</option>)}
               </select>
             </Input>
+            <Input
+              label="الجنس"
+              name="gender"
+              value={values.gender}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="اختر"
+            >
+              <select name="gender" value={values.gender} onChange={handleChange} onBlur={handleBlur} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer">
+                <option value="">اختر الجنس</option>
+                <option value="MALE">ذكر</option>
+                <option value="FEMALE">أنثى</option>
+              </select>
+            </Input>
           </div>
+          <Input
+            label="رقم الهاتف"
+            type="tel"
+            name="phone"
+            value={values.phone}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder="07XXXXXXXX"
+            leftIcon={<Phone className="w-5 h-5 text-gray-400" />}
+          />
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="secondary" onClick={() => { setShowEditModal(false); setEditingUser(null); }}>إلغاء</Button>
             <Button type="submit" loading={updating}>حفظ التغييرات</Button>
