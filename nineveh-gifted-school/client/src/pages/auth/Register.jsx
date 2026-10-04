@@ -27,6 +27,8 @@ export default function Register() {
       password: '',
       confirmPassword: '',
       role: 'STUDENT',
+      gender: '',
+      phone: ''
     },
     validate: (values) => {
       const errs = {};
@@ -186,6 +188,55 @@ export default function Register() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="الجنس"
+              type="text"
+              name="gender"
+              value={values.gender}
+              onChange={handleChange}
+              placeholder="اختر"
+              leftIcon={<User className="w-5 h-5 text-gray-400" />}
+            >
+              <select
+                name="gender"
+                value={values.gender}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+              >
+                <option value="">اختر الجنس</option>
+                <option value="MALE">ذكر</option>
+                <option value="FEMALE">أنثى</option>
+              </select>
+            </Input>
+
+            <Input
+              label="رقم الهاتف"
+              type="tel"
+              name="phone"
+              value={values.phone}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              placeholder="07XXXXXXXX"
+              autoComplete="tel"
+              leftIcon={<User className="w-5 h-5 text-gray-400" />}
+            />
+          </div>
+
+          <div className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              id="terms"
+              required
+              className="mt-1 w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            <label htmlFor="terms" className="text-sm text-gray-600">
+              أوافق على <Link to="/terms" className="text-primary-600 hover:underline">الشروط والأحكام</Link> و
+              <Link to="/privacy" className="text-primary-600 hover:underline">سياسة الخصوصية</Link>
+            </label>
           </div>
 
           <Button type="submit" className="w-full" size="lg">
