@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { assignmentAPI, messageAPI, examAPI, scheduleAPI } from '../services/api';
+import { assignmentAPI, examAPI, scheduleAPI } from '../services/api';
 import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import { 
-  FileText, MessageSquare, 
+  FileText, 
   Award, Calendar, TrendingUp, ArrowRight, BookOpen, Clock
 } from 'lucide-react';
 import { formatDate, getRoleLabel, getRoleColor, cn } from '../utils/helpers';
 
 const statCards = [
   { name: 'الواجبات', href: '/assignments', icon: FileText, color: 'bg-green-500', countKey: 'pendingAssignments' },
-  { name: 'الرسائل', href: '/messages', icon: MessageSquare, color: 'bg-purple-500', countKey: 'unreadMessages' },
   { name: 'الامتحانات', href: '/exams', icon: Award, color: 'bg-red-500', countKey: 'totalExams' },
 ];
 
@@ -32,7 +31,7 @@ export default function Dashboard() {
     try {
       setLoading(true);
       
-      const params = { limit: 5 };
+      const params = { limit: 1000 };
       if (user.role === 'STUDENT' && user.classId) {
         params.classId = user.classId;
       }
@@ -42,28 +41,24 @@ export default function Dashboard() {
         examParams.classId = user.classId;
       }
 
-      const [assignmentsRes, examsRes, scheduleRes, messagesRes] = await Promise.all([
+      const [assignmentsRes, examsRes, scheduleRes] = await Promise.all([
         assignmentAPI.getAll(params).catch(() => ({ data: { assignments: [] } })),
         examAPI.getAll(examParams).catch(() => ({ data: { exams: [] } })),
-        scheduleAPI.getMy().catch(() => ({ data: { schedules: [] } })),
-        messageAPI.getUnreadCount().catch(() => ({ data: {} }))
+        scheduleAPI.getMy().catch(() => ({ data: { schedules: [] } }))
       ]);
 
-      let myAssignments = [];
-      if (user.role === 'STUDENT') {
-        try {
-          const submissionsRes = await assignmentAPI.getMySubmissions();
-          myAssignments = submissionsRes?.data?.submissions || [];
-        } catch {}
+      // واجبات صفك فقط: للطالب صفك، لولي الأمر صفوف أبنائه، والمعلم واجباته
+      let classAssignments = assignmentsRes?.data?.assignments || [];
+      if (user.role === 'PARENT' && Array.isArray(user.childrenClassIds)) {
+        classAssignments = classAssignments.filter(a => user.childrenClassIds.includes(a.classId));
       }
 
       setStats({
-        pendingAssignments: user.role === 'TEACHER' ? (assignmentsRes?.data?.assignments?.filter(a => a._count?.submissions === 0).length || 0) : myAssignments.filter(s => s.status === 'PENDING').length,
-        unreadMessages: messagesRes?.data?.count || messagesRes?.data?.unreadCount || 0,
+        pendingAssignments: classAssignments.length,
         totalExams: examsRes?.data?.exams?.length || 0,
       });
 
-      setUpcomingAssignments(assignmentsRes?.data?.assignments || []);
+      setUpcomingAssignments(classAssignments);
       setUpcomingExams(examsRes?.data?.exams || []);
       
       const today = new Date().getDay();
