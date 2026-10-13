@@ -239,9 +239,6 @@ export default function AdminClasses() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => openStudentsModal(cls)} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="إدارة الطلاب">
-                        <Users className="w-5 h-5" />
-                      </button>
                       <button onClick={() => openEditModal(cls)} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="تعديل">
                         <Edit className="w-5 h-5" />
                       </button>
