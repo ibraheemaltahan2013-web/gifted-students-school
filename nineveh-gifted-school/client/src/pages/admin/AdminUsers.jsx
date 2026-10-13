@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { formatDate, relativeTime, getRoleLabel, getRoleColor, cn } from '../../utils/helpers';
 
-const roles = ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'];
+const roles = ['ADMIN', 'MANAGER', 'ASSISTANT', 'TEACHER', 'STUDENT', 'PARENT'];
 
 export default function AdminUsers() {
   const { user } = useAuth();
