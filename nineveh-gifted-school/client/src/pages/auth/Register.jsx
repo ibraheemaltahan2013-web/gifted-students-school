@@ -11,6 +11,17 @@ const roles = [
   { value: 'STUDENT', label: 'طالب', icon: User },
   { value: 'TEACHER', label: 'مدرس', icon: Shield },
   { value: 'PARENT', label: 'ولي أمر', icon: User },
+  { value: 'ASSISTANT', label: 'المعاون', icon: Shield },
+  { value: 'MANAGER', label: 'المدير', icon: Shield },
+];
+
+const classOptions = [
+  { value: 'first-intermediate', label: 'الأول متوسط' },
+  { value: 'second-intermediate', label: 'الثاني متوسط' },
+  { value: 'third-intermediate', label: 'الثالث متوسط' },
+  { value: 'fourth-prep', label: 'الرابع إعدادي' },
+  { value: 'fifth-prep', label: 'الخامس إعدادي' },
+  { value: 'sixth-prep', label: 'السادس إعدادي' },
 ];
 
 export default function Register() {
@@ -19,8 +30,9 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const { values, errors, handleChange, handleBlur, handleSubmit, setFieldError } = useForm({
+  const { values, errors, handleChange, handleBlur, handleSubmit, setFieldError, setValues } = useForm({
     initialValues: {
       fullName: '',
       email: '',
@@ -28,7 +40,8 @@ export default function Register() {
       confirmPassword: '',
       role: 'STUDENT',
       gender: '',
-      phone: ''
+      phone: '',
+      classId: ''
     },
     validate: (values) => {
       const errs = {};
@@ -48,7 +61,11 @@ export default function Register() {
     onSubmit: async (formValues) => {
       try {
         setError('');
+        setSubmitting(true);
         const { confirmPassword, ...data } = formValues;
+        if (!['STUDENT', 'PARENT', 'TEACHER'].includes(data.role)) {
+          delete data.classId;
+        }
         await register(data);
         navigate('/dashboard');
       } catch (err) {
@@ -56,15 +73,19 @@ export default function Register() {
         if (err.response?.data?.details) {
           err.response.data.details.forEach(d => setFieldError(d.field, d.message));
         }
+      } finally {
+        setSubmitting(false);
       }
     }
   });
 
+  const showClassSelect = ['STUDENT', 'PARENT', 'TEACHER'].includes(values.role);
+
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader className="text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-100 mb-3">
-          <Shield className="w-6 h-6 text-primary-600" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-primary-200 mb-3 overflow-hidden">
+          <img src="/school-logo.jpg" alt="شعار المدرسة" className="w-full h-full object-contain" />
         </div>
         <CardTitle className="text-2xl">إنشاء حساب جديد</CardTitle>
         <CardDescription>انضم إلى مدرسة موهوبين نينوى</CardDescription>
@@ -152,12 +173,17 @@ export default function Register() {
 
           <div>
             <label className="label">نوع الحساب</label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
               {roles.map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => handleChange({ target: { name: 'role', value } })}
+                  onClick={() => {
+                    handleChange({ target: { name: 'role', value } });
+                    if (!['STUDENT', 'PARENT'].includes(value)) {
+                      setValues(prev => ({ ...prev, role: value, classId: '' }));
+                    }
+                  }}
                   className={`
                     relative p-4 rounded-xl border-2 text-center transition-all
                     ${values.role === value 
@@ -190,16 +216,28 @@ export default function Register() {
             </div>
           </div>
 
+          {showClassSelect && (
+            <div>
+              <label className="label">الصف الدراسي</label>
+              <select
+                name="classId"
+                value={values.classId}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+              >
+                <option value="">اختر الصف</option>
+                {classOptions.map((cls) => (
+                  <option key={cls.value} value={cls.value}>{cls.label}</option>
+                ))}
+              </select>
+              {errors.classId && <p className="mt-1 text-sm text-red-600">{errors.classId}</p>}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="الجنس"
-              type="text"
-              name="gender"
-              value={values.gender}
-              onChange={handleChange}
-              placeholder="اختر"
-              leftIcon={<User className="w-5 h-5 text-gray-400" />}
-            >
+            <div>
+              <label className="label">الجنس</label>
               <select
                 name="gender"
                 value={values.gender}
@@ -211,7 +249,7 @@ export default function Register() {
                 <option value="MALE">ذكر</option>
                 <option value="FEMALE">أنثى</option>
               </select>
-            </Input>
+            </div>
 
             <Input
               label="رقم الهاتف"
@@ -226,21 +264,8 @@ export default function Register() {
             />
           </div>
 
-          <div className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              id="terms"
-              required
-              className="mt-1 w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-            />
-            <label htmlFor="terms" className="text-sm text-gray-600">
-              أوافق على <Link to="/terms" className="text-primary-600 hover:underline">الشروط والأحكام</Link> و
-              <Link to="/privacy" className="text-primary-600 hover:underline">سياسة الخصوصية</Link>
-            </label>
-          </div>
-
-          <Button type="submit" className="w-full" size="lg">
-            إنشاء الحساب
+          <Button type="submit" className="w-full" size="lg" loading={submitting} disabled={submitting}>
+            {submitting ? 'جاري إنشاء الحساب...' : 'إنشاء الحساب'}
           </Button>
         </form>
 

@@ -1,25 +1,23 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
-import Dashboard from './pages/Dashboard';
-import Classes from './pages/Classes';
-import ClassDetail from './pages/ClassDetail';
-import Announcements from './pages/Announcements';
-import Assignments from './pages/Assignments';
-import AssignmentDetail from './pages/AssignmentDetail';
-import Messages from './pages/Messages';
-import Conversation from './pages/Conversation';
-import Attendance from './pages/Attendance';
-import Exams from './pages/Exams';
-import Schedule from './pages/Schedule';
-import Profile from './pages/Profile';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminClasses from './pages/admin/AdminClasses';
 import LoadingScreen from './components/ui/LoadingScreen';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Assignments = lazy(() => import('./pages/Assignments'));
+const AssignmentDetail = lazy(() => import('./pages/AssignmentDetail'));
+const Messages = lazy(() => import('./pages/Messages'));
+const Conversation = lazy(() => import('./pages/Conversation'));
+const Exams = lazy(() => import('./pages/Exams'));
+const Schedule = lazy(() => import('./pages/Schedule'));
+const Profile = lazy(() => import('./pages/Profile'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminClasses = lazy(() => import('./pages/admin/AdminClasses'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -31,6 +29,10 @@ function ProtectedRoute({ children, allowedRoles }) {
   return children;
 }
 
+function LazyPage({ children }) {
+  return <Suspense fallback={<LoadingScreen />}>{children}</Suspense>;
+}
+
 function App() {
   return (
     <Routes>
@@ -40,24 +42,18 @@ function App() {
       </Route>
       
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/classes" element={<Classes />} />
-        <Route path="/classes/:id" element={<ClassDetail />} />
-        <Route path="/announcements" element={<Announcements />} />
-        <Route path="/assignments" element={<Assignments />} />
-        <Route path="/assignments/:id" element={<AssignmentDetail />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/messages/:userId" element={<Conversation />} />
-        <Route path="/attendance" element={<Attendance />} />
-        <Route path="/exams" element={<Exams />} />
-        <Route path="/schedule" element={<Schedule />} />
-        <Route path="/profile" element={<Profile />} />
-        
-        <Route element={<ProtectedRoute allowedRoles={['ADMIN']}><MainLayout /></ProtectedRoute>}>
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/classes" element={<AdminClasses />} />
-        </Route>
+        <Route path="/dashboard" element={<LazyPage><Dashboard /></LazyPage>} />
+        <Route path="/assignments" element={<LazyPage><Assignments /></LazyPage>} />
+        <Route path="/assignments/:id" element={<LazyPage><AssignmentDetail /></LazyPage>} />
+        <Route path="/messages" element={<LazyPage><Messages /></LazyPage>} />
+        <Route path="/messages/:userId" element={<LazyPage><Conversation /></LazyPage>} />
+        <Route path="/exams" element={<LazyPage><Exams /></LazyPage>} />
+        <Route path="/schedule" element={<LazyPage><Schedule /></LazyPage>} />
+        <Route path="/profile" element={<LazyPage><Profile /></LazyPage>} />
+        <Route path="/admin" element={<LazyPage><Dashboard /></LazyPage>} />
+        <Route path="/admin/users" element={<LazyPage><AdminUsers /></LazyPage>} />
+        <Route path="/admin/classes" element={<LazyPage><AdminClasses /></LazyPage>} />
+        <Route path="/notifications" element={<LazyPage><Notifications /></LazyPage>} />
       </Route>
       
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

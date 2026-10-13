@@ -41,7 +41,9 @@ export function getInitials(name) {
 
 export function getRoleLabel(role) {
   const labels = {
-    ADMIN: 'مدير',
+    ADMIN: 'مدير النظام',
+    MANAGER: 'المدير',
+    ASSISTANT: 'المعاون',
     TEACHER: 'مدرس',
     STUDENT: 'طالب',
     PARENT: 'ولي أمر'
@@ -52,6 +54,8 @@ export function getRoleLabel(role) {
 export function getRoleColor(role) {
   const colors = {
     ADMIN: 'bg-purple-100 text-purple-800',
+    MANAGER: 'bg-red-100 text-red-800',
+    ASSISTANT: 'bg-cyan-100 text-cyan-800',
     TEACHER: 'bg-blue-100 text-blue-800',
     STUDENT: 'bg-green-100 text-green-800',
     PARENT: 'bg-orange-100 text-orange-800'

@@ -9,6 +9,8 @@ datasource db {
 
 enum Role {
   ADMIN
+  MANAGER
+  ASSISTANT
   TEACHER
   STUDENT
   PARENT
@@ -52,7 +54,6 @@ model User {
   receivedMessages Message[] @relation("ReceivedMessages")
   announcements Announcement[] @relation("AnnouncementAuthor")
   assignments   Assignment[] @relation("AssignmentTeacher")
-  submissions   Submission[] @relation("SubmissionStudent")
   grades        Grade[]      @relation("GradeTeacher")
   attendances   Attendance[] @relation("AttendanceTeacher")
 }
@@ -178,9 +179,12 @@ model Exam {
   classId   String
   class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   subject   String
-  examDate  DateTime
-  duration  Int
+  examDate  DateTime?
+  duration  Int      @default(60)
   maxScore  Int      @default(100)
+  semester  String?
+  examType  String?
+  time      String?
   grades    Grade[]
 }
 

@@ -1,85 +1,87 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { scheduleAPI, classAPI } from '../services/api';
-import Card, { CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import Card, { CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
-import Avatar from '../components/ui/Avatar';
-import Modal from '../components/ui/Modal';
-import Input from '../components/ui/Input';
-import { useForm } from '../hooks/useForm';
-import { 
-  Calendar, Clock, BookOpen, Building2, User, Plus, 
-  Edit, Trash2, Eye, Loader2, Search, ChevronRight
-} from 'lucide-react';
+import { Plus, Trash2, Save, Loader2, Check, Coffee, BookOpen } from 'lucide-react';
 import { cn } from '../utils/helpers';
 
-const daysOfWeek = [
-  { value: 0, label: 'الأحد', short: 'أحد' },
-  { value: 1, label: 'الإثنين', short: 'اثنين' },
-  { value: 2, label: 'الثلاثاء', short: 'ثلاثاء' },
-  { value: 3, label: 'الأربعاء', short: 'أربعاء' },
-  { value: 4, label: 'الخميس', short: 'خميس' },
-  { value: 5, label: 'الجمعة', short: 'جمعة' },
-  { value: 6, label: 'السبت', short: 'سبت' },
+const days = [
+  { value: 0, label: 'الأحد' },
+  { value: 1, label: 'الإثنين' },
+  { value: 2, label: 'الثلاثاء' },
+  { value: 3, label: 'الأربعاء' },
+  { value: 4, label: 'الخميس' },
 ];
 
-const workingDays = daysOfWeek.slice(0, 5);
+const defaultClasses = [
+  { id: 'first-intermediate', name: 'الأول متوسط' },
+  { id: 'second-intermediate', name: 'الثاني متوسط' },
+  { id: 'third-intermediate', name: 'الثالث متوسط' },
+  { id: 'fourth-prep', name: 'الرابع إعدادي' },
+  { id: 'fifth-prep', name: 'الخامس إعدادي' },
+  { id: 'sixth-prep', name: 'السادس إعدادي' },
+];
+
+const defaultEntry = () => ({
+  id: Date.now().toString(),
+  type: 'lesson',
+  startTime: '08:00',
+  endTime: '08:45',
+  subject: '',
+  room: '',
+  isNew: true,
+});
 
 export default function Schedule() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [schedules, setSchedules] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [teachers, setTeachers] = useState([]);
+  const canEdit = ['TEACHER', 'ASSISTANT', 'MANAGER', 'ADMIN'].includes(user?.role);
+  const isStudent = user?.role === 'STUDENT';
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('week'); // week, list
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [activeDay, setActiveDay] = useState(0);
+  const [selectedClass, setSelectedClass] = useState(isStudent ? (user?.classId || '') : '');
 
-  const { values, errors, handleChange, handleBlur, handleSubmit, resetForm, setFieldError } = useForm({
-    initialValues: { classId: '', subject: '', teacherId: '', dayOfWeek: 0, startTime: '', endTime: '', room: '' },
-    validate: (values) => {
-      const errs = {};
-      if (!values.classId) errs.classId = 'الصف مطلوب';
-      if (!values.subject.trim()) errs.subject = 'المادة مطلوبة';
-      if (!values.teacherId) errs.teacherId = 'المدرس مطلوب';
-      if (!values.startTime) errs.startTime = 'وقت البداية مطلوب';
-      if (!values.endTime) errs.endTime = 'وقت النهاية مطلوب';
-      if (values.startTime && values.endTime && values.startTime >= values.endTime) {
-        errs.endTime = 'وقت النهاية يجب أن يكون بعد وقت البداية';
-      }
-      return errs;
-    },
-    onSubmit: async (formValues) => {
-      try {
-        setCreating(true);
-        await scheduleAPI.create({ ...formValues, dayOfWeek: Number(formValues.dayOfWeek) });
-        setShowCreateModal(false);
-        resetForm();
-        loadSchedules();
-      } catch (err) {
-        if (err.response?.data?.details) {
-          err.response.data.details.forEach(d => setFieldError(d.field, d.message));
-        }
-      } finally {
-        setCreating(false);
-      }
-    }
+  const [weekSchedule, setWeekSchedule] = useState(() => {
+    const schedule = {};
+    days.forEach(d => { schedule[d.value] = []; });
+    return schedule;
   });
 
-  useEffect(() => {
-    loadSchedules();
-    loadClasses();
-    loadTeachers();
-  }, []);
+  useEffect(() => { loadSchedules(); }, [selectedClass]);
 
   const loadSchedules = async () => {
     try {
       setLoading(true);
-      const res = await scheduleAPI.getMy();
-      setSchedules(res.data.schedules || []);
+      const params = {};
+      if (selectedClass) params.classId = selectedClass;
+      const res = await scheduleAPI.getAll(params);
+      const list = res.data.schedules || [];
+      const schedule = {};
+      days.forEach(d => { schedule[d.value] = []; });
+
+      list.forEach(s => {
+        if (s.dayOfWeek >= 0 && s.dayOfWeek <= 4) {
+          schedule[s.dayOfWeek].push({
+            id: s.id,
+            type: 'lesson',
+            startTime: s.startTime,
+            endTime: s.endTime,
+            subject: s.subject || '',
+            room: s.room || '',
+            classId: s.classId,
+            teacherId: s.teacherId,
+            isNew: false,
+          });
+        }
+      });
+
+      days.forEach(d => {
+        schedule[d.value].sort((a, b) => a.startTime.localeCompare(b.startTime));
+      });
+
+      setWeekSchedule(schedule);
     } catch (error) {
       console.error('Failed to load schedules:', error);
     } finally {
@@ -87,310 +89,329 @@ export default function Schedule() {
     }
   };
 
-  const loadClasses = async () => {
+  const addEntry = (type = 'lesson') => {
+    const entries = weekSchedule[activeDay];
+    const lastEntry = entries[entries.length - 1];
+    const startTime = lastEntry ? lastEntry.endTime : '08:00';
+    const defaultDuration = type === 'break' ? 15 : 45;
+    const endTime = incrementTime(startTime, defaultDuration);
+
+    setWeekSchedule(prev => ({
+      ...prev,
+      [activeDay]: [...prev[activeDay], { ...defaultEntry(), type, startTime, endTime }],
+    }));
+  };
+
+  const updateEntry = (entryId, field, value) => {
+    setWeekSchedule(prev => ({
+      ...prev,
+      [activeDay]: prev[activeDay].map(e =>
+        e.id === entryId ? { ...e, [field]: value } : e
+      ),
+    }));
+  };
+
+  const removeEntry = (entryId) => {
+    setWeekSchedule(prev => ({
+      ...prev,
+      [activeDay]: prev[activeDay].filter(e => e.id !== entryId),
+    }));
+  };
+
+  const incrementTime = (time, minutes) => {
+    if (!time || !time.includes(':')) return '00:00';
+    const [h, m] = time.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return '00:00';
+    const total = h * 60 + m + minutes;
+    const hours = Math.floor(total / 60) % 24;
+    const mins = total % 60;
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+  };
+
+  const handleSave = async () => {
     try {
-      const res = await classAPI.getMyClasses();
-      setClasses(res.data.classes || []);
+      setSaving(true);
+      setSaved(false);
+
+      for (const day of days) {
+        const entries = weekSchedule[day.value];
+
+        for (const entry of entries) {
+          if (entry.type === 'lesson' && entry.subject.trim()) {
+            if (entry.isNew) {
+              await scheduleAPI.create({
+                classId: entry.classId || selectedClass || 'first-intermediate',
+                teacherId: entry.teacherId || user.id,
+                subject: entry.subject.trim(),
+                room: entry.room.trim() || null,
+                dayOfWeek: day.value,
+                startTime: entry.startTime,
+                endTime: entry.endTime,
+              });
+            } else {
+              await scheduleAPI.update(entry.id, {
+                subject: entry.subject.trim(),
+                room: entry.room.trim() || null,
+                startTime: entry.startTime,
+                endTime: entry.endTime,
+              });
+            }
+          } else if (entry.type === 'lesson' && !entry.subject.trim() && !entry.isNew) {
+            await scheduleAPI.delete(entry.id);
+          }
+        }
+      }
+
+      await loadSchedules();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (error) {
-      console.error('Failed to load classes:', error);
+      console.error('Failed to save schedule:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const loadTeachers = async () => {
-    try {
-      const res = await scheduleAPI.getAll({});
-      // Extract unique teachers from schedules
-      const uniqueTeachers = [...new Map((res.data.schedules || []).map(s => [s.teacher?.id, s.teacher])).values()];
-      setTeachers(uniqueTeachers.filter(t => t));
-    } catch (error) {
-      console.error('Failed to load teachers:', error);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      </div>
+    );
+  }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه الحصة؟')) return;
-    try {
-      await scheduleAPI.delete(id);
-      loadSchedules();
-    } catch (error) {
-      console.error('Failed to delete schedule:', error);
-    }
-  };
-
-  const canManage = user.role === 'TEACHER' || user.role === 'ADMIN';
-
-  // Group schedules by day for week view
-  const schedulesByDay = workingDays.map(day => ({
-    day,
-    schedules: schedules
-      .filter(s => s.dayOfWeek === day.value)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime))
-  }));
-
-  const timeSlots = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-    '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
-    '14:00', '14:30', '15:00', '15:30', '16:00'
-  ];
+  const currentEntries = weekSchedule[activeDay];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">الجدول الدراسي</h1>
-          <p className="text-gray-500 mt-1">مواعيد الحصص والصفوف</p>
+          <p className="text-gray-500 mt-1">أضف الحصص والاستراحات بحرية</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex rounded-lg bg-gray-100 p-1">
-            {['week', 'list'].map(v => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={cn(
-                  'px-3 py-1.5 text-sm font-medium rounded transition-colors',
-                  view === v ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                )}
-              >
-                {v === 'week' ? 'أسبوع' : 'قائمة'}
-              </button>
-            ))}
-          </div>
-          {canManage && (
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              حصة جديدة
-            </Button>
-          )}
-        </div>
+        {canEdit && (
+          <Button onClick={handleSave} loading={saving} variant={saved ? 'success' : 'primary'}>
+            {saved ? <Check className="w-4 h-4 mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            {saved ? 'تم الحفظ' : 'حفظ الجدول'}
+          </Button>
+        )}
       </div>
 
-      {view === 'week' ? (
-        // Week View
-        <Card>
-          <CardContent className="p-0 overflow-x-auto">
-            <div className="min-w-[900px]">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="w-24 px-3 py-2 text-right font-medium text-gray-500">الوقت</th>
-                    {workingDays.map(({ day, short }) => (
-                      <th key={day.value} className="px-2 py-2 text-center font-medium text-gray-700 border-r border-gray-100">
-                        <div className="flex flex-col items-center gap-1">
-                          <span>{short}</span>
-                          <span className="text-xs text-gray-400">{day.label}</span>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {timeSlots.map((time, timeIndex) => (
-                    <tr key={time} className={timeIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="w-24 px-3 py-1 text-right text-sm text-gray-500 font-medium border-b border-gray-100">
-                        {time}
-                      </td>
-                      {workingDays.map(({ day }) => (
-                        <td key={day.value} className="px-1 py-1 border-r border-gray-100 border-b border-gray-100 min-h-[80px] relative">
-                          {schedulesByDay.find(d => d.day.value === day.value)?.schedules
-                            .filter(s => s.startTime <= time && s.endTime > time)
-                            .map(schedule => (
-                              <Link
-                                key={schedule.id}
-                                to={`/classes/${schedule.class?.id}`}
-                                className="absolute inset-x-0.5 top-0.5 bottom-0.5 m-0.5 bg-primary-100 border border-primary-200 rounded-lg p-1.5 text-xs hover:bg-primary-200 transition-colors z-10"
-                                onClick={(e) => e.preventDefault()}
-                              >
-                                <div className="font-medium text-primary-800 truncate">{schedule.subject}</div>
-                                <div className="text-primary-700 truncate">{schedule.class?.name}</div>
-                                <div className="text-primary-600">{schedule.room || ''}</div>
-                              </Link>
-                            ))}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        // List View
-        <>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="h-20 p-4" />
-                </Card>
-              ))}
-            </div>
-          ) : schedules.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Calendar className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">لا توجد حصص مجدولة</h3>
-                <p className="text-gray-500 mb-4">أضف حصصاً جديدة للجدول</p>
-                {canManage && (
-                  <Button onClick={() => setShowCreateModal(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    إضافة أول حصة
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="space-y-3">
-                {workingDays.map(({ day }) => {
-                  const daySchedules = schedules.filter(s => s.dayOfWeek === day.value).sort((a, b) => a.startTime.localeCompare(b.startTime));
-                  if (daySchedules.length === 0) return null;
-                  return (
-                    <Card key={day.value}>
-                      <CardHeader className="bg-gray-50">
-                        <CardTitle className="flex items-center gap-2">
-                          <Calendar className="w-5 h-5 text-primary-600" />
-                          {day.label}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="space-y-2">
-                          {daySchedules.map(schedule => (
-                            <div key={schedule.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                              <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center">
-                                  <BookOpen className="w-5 h-5 text-primary-600" />
-                                </div>
-                                <div>
-                                  <h4 className="font-medium text-gray-900">{schedule.subject}</h4>
-                                  <p className="text-sm text-gray-500">{schedule.class?.name} • {schedule.teacher?.user?.fullName}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <div className="text-left">
-                                  <p className="font-medium text-gray-900">{schedule.startTime} - {schedule.endTime}</p>
-                                  {schedule.room && <p className="text-sm text-gray-500">{schedule.room}</p>}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Link to={`/classes/${schedule.class?.id}`} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="عرض الصف">
-                                    <Eye className="w-5 h-5" />
-                                  </Link>
-                                  {canManage && (
-                                    <>
-                                      <button className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="تعديل">
-                                        <Edit className="w-5 h-5" />
-                                      </button>
-                                      <button onClick={() => handleDelete(schedule.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="حذف">
-                                        <Trash2 className="w-5 h-5" />
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </>
+      {/* Class Selector */}
+      {!isStudent && (
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setSelectedClass('')}
+            className={cn(
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              selectedClass === ''
+                ? 'bg-primary-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            الكل
+          </button>
+          {defaultClasses.map(cls => (
+            <button
+              key={cls.id}
+              onClick={() => setSelectedClass(cls.id)}
+              className={cn(
+                'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                selectedClass === cls.id
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              )}
+            >
+              {cls.name}
+            </button>
+          ))}
+        </div>
       )}
 
-      {/* Create Schedule Modal */}
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="إضافة حصة جديدة" size="lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="الصف"
-              name="classId"
-              value={values.classId}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.classId}
-              placeholder="اختر الصف"
-            >
-              <select name="classId" value={values.classId} onChange={handleChange} onBlur={handleBlur} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer">
-                <option value="">اختر الصف</option>
-                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </Input>
-            <Input
-              label="المادة"
-              name="subject"
-              value={values.subject}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.subject}
-              placeholder="مثال: رياضيات، علوم، لغة عربية"
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="المدرس"
-              name="teacherId"
-              value={values.teacherId}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.teacherId}
-              placeholder="اختر المدرس"
-            >
-              <select name="teacherId" value={values.teacherId} onChange={handleChange} onBlur={handleBlur} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer">
-                <option value="">اختر المدرس</option>
-                {teachers.map(t => <option key={t.id} value={t.id}>{t.user?.fullName}</option>)}
-              </select>
-            </Input>
-            <Input
-              label="اليوم"
-              name="dayOfWeek"
-              value={values.dayOfWeek}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="اختر اليوم"
-            >
-              <select name="dayOfWeek" value={values.dayOfWeek} onChange={handleChange} onBlur={handleBlur} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer">
-                {workingDays.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-              </select>
-            </Input>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Input
-              label="وقت البداية"
-              type="time"
-              name="startTime"
-              value={values.startTime}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.startTime}
-            />
-            <Input
-              label="وقت النهاية"
-              type="time"
-              name="endTime"
-              value={values.endTime}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.endTime}
-            />
-            <Input
-              label="القاعة (اختياري)"
-              name="room"
-              value={values.room}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="مثال: قاعة 1، مختبر علوم"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>إلغاء</Button>
-            <Button type="submit" loading={creating}>حفظ</Button>
-          </div>
-        </form>
-      </Modal>
+      {/* Day Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {days.map(d => (
+          <button
+            key={d.value}
+            onClick={() => setActiveDay(d.value)}
+            className={cn(
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
+              activeDay === d.value
+                ? 'bg-primary-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            {d.label}
+            {weekSchedule[d.value].length > 0 && (
+              <span className={cn(
+                'mr-2 px-1.5 py-0.5 text-xs rounded-full',
+                activeDay === d.value ? 'bg-primary-500' : 'bg-gray-300 text-gray-600'
+              )}>
+                {weekSchedule[d.value].filter(e => e.type === 'lesson').length}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Schedule Entries */}
+      <Card>
+        <CardContent className="p-4">
+          {currentEntries.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <p>لا توجد حصص لهذا اليوم</p>
+              <p className="text-sm mt-1">اضغط على الأزرار أدناه لإضافة حصة أو استراحة</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {currentEntries.map((entry, idx) => (
+                <div
+                  key={entry.id}
+                  className={cn(
+                    'flex items-center gap-3 p-3 rounded-xl border-2 transition-all',
+                    entry.type === 'break'
+                      ? 'bg-amber-50 border-amber-200'
+                      : 'bg-white border-gray-200 hover:border-primary-300'
+                  )}
+                >
+                  {/* Number */}
+                  <div className={cn(
+                    'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0',
+                    entry.type === 'break' ? 'bg-amber-200 text-amber-700' : 'bg-primary-100 text-primary-700'
+                  )}>
+                    {idx + 1}
+                  </div>
+
+                  {/* Type Icon */}
+                  <div className={cn(
+                    'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                    entry.type === 'break' ? 'bg-amber-100' : 'bg-primary-100'
+                  )}>
+                    {entry.type === 'break'
+                      ? <Coffee className="w-5 h-5 text-amber-600" />
+                      : <BookOpen className="w-5 h-5 text-primary-600" />
+                    }
+                  </div>
+
+                  {/* Time Inputs */}
+                  {canEdit ? (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <input
+                        type="text"
+                        value={entry.startTime}
+                        onChange={(e) => updateEntry(entry.id, 'startTime', e.target.value)}
+                        placeholder="08:00"
+                        className="w-20 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-400 bg-white text-center"
+                      />
+                      <span className="text-gray-400">-</span>
+                      <input
+                        type="text"
+                        value={entry.endTime}
+                        onChange={(e) => updateEntry(entry.id, 'endTime', e.target.value)}
+                        placeholder="08:45"
+                        className="w-20 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-400 bg-white text-center"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm font-medium text-gray-700 shrink-0">
+                      {entry.startTime} - {entry.endTime}
+                    </span>
+                  )}
+
+                  {/* Duration Input */}
+                  {canEdit ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <input
+                        type="number"
+                        min="5"
+                        max="120"
+                        value={calcDuration(entry.startTime, entry.endTime)}
+                        onChange={(e) => {
+                          const mins = parseInt(e.target.value) || 45;
+                          const newEnd = incrementTime(entry.startTime, mins);
+                          updateEntry(entry.id, 'endTime', newEnd);
+                        }}
+                        className="w-14 px-2 py-1.5 text-sm text-center border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-400 bg-white"
+                      />
+                      <span className="text-xs text-gray-500">د</span>
+                    </div>
+                  ) : (
+                    <span className={cn(
+                      'text-xs px-2 py-1 rounded-full shrink-0',
+                      entry.type === 'break' ? 'bg-amber-200 text-amber-700' : 'bg-gray-100 text-gray-600'
+                    )}>
+                      {calcDuration(entry.startTime, entry.endTime)} د
+                    </span>
+                  )}
+
+                  {/* Subject Input */}
+                  {canEdit ? (
+                    <input
+                      type="text"
+                      value={entry.subject}
+                      onChange={(e) => updateEntry(entry.id, 'subject', e.target.value)}
+                      placeholder={entry.type === 'break' ? 'استراحة' : 'اسم المادة'}
+                      className={cn(
+                        'flex-1 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-400',
+                        entry.type === 'break'
+                          ? 'bg-amber-50 border-amber-200 text-amber-700 placeholder-amber-400'
+                          : 'bg-white border-gray-200'
+                      )}
+                    />
+                  ) : (
+                    <span className="flex-1 text-sm font-medium text-gray-900">
+                      {entry.subject || (entry.type === 'break' ? 'استراحة' : '-')}
+                    </span>
+                  )}
+
+                  {/* Room Input */}
+                  {canEdit && entry.type === 'lesson' && (
+                    <input
+                      type="text"
+                      value={entry.room}
+                      onChange={(e) => updateEntry(entry.id, 'room', e.target.value)}
+                      placeholder="القاعة"
+                      className="w-24 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-400 bg-white"
+                    />
+                  )}
+
+                  {/* Delete Button */}
+                  {canEdit && (
+                    <button
+                      onClick={() => removeEntry(entry.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add Buttons */}
+          {canEdit && (
+            <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
+              <Button variant="secondary" onClick={() => addEntry('lesson')} className="flex-1">
+                <Plus className="w-4 h-4 mr-2" />
+                إضافة حصة
+              </Button>
+              <Button variant="secondary" onClick={() => addEntry('break')} className="flex-1">
+                <Coffee className="w-4 h-4 mr-2" />
+                إضافة استراحة
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
+}
+
+function calcDuration(start, end) {
+  if (!start || !end || !start.includes(':') || !end.includes(':')) return 0;
+  const [h1, m1] = start.split(':').map(Number);
+  const [h2, m2] = end.split(':').map(Number);
+  if (isNaN(h1) || isNaN(m1) || isNaN(h2) || isNaN(m2)) return 0;
+  return (h2 * 60 + m2) - (h1 * 60 + m1);
 }

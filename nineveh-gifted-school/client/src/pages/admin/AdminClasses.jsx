@@ -34,12 +34,11 @@ export default function AdminClasses() {
   const [updating, setUpdating] = useState(false);
 
   const { values, errors, handleChange, handleBlur, handleSubmit, resetForm, setFieldError, setValues } = useForm({
-    initialValues: { name: '', grade: '', section: '', teacherId: '' },
+    initialValues: { name: '', grade: '', teacherId: '' },
     validate: (values) => {
       const errs = {};
       if (!values.name.trim()) errs.name = 'اسم الصف مطلوب';
       if (!values.grade) errs.grade = 'المرحلة مطلوبة';
-      if (!values.section.trim()) errs.section = 'الشعبة مطلوبة';
       return errs;
     },
     onSubmit: async (formValues) => {
@@ -63,7 +62,8 @@ export default function AdminClasses() {
       if (search) params.search = search;
       if (gradeFilter) params.grade = gradeFilter;
       const res = await classAPI.getAll(params);
-      setClasses(res.data.classes || []);
+      const sorted = (res.data.classes || []).sort((a, b) => a.grade - b.grade);
+      setClasses(sorted);
       setTotalPages(res.data.totalPages || 1);
     } catch (error) {
       console.error('Failed to load classes:', error);
@@ -128,7 +128,6 @@ export default function AdminClasses() {
     setValues({
       name: cls.name,
       grade: String(cls.grade),
-      section: cls.section,
       teacherId: cls.teacherId || ''
     });
     setShowEditModal(true);
@@ -169,7 +168,7 @@ export default function AdminClasses() {
     }
   };
 
-  const grades = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const grades = [7,8,9,10,11,12];
 
   return (
     <div className="space-y-6">
@@ -179,37 +178,7 @@ export default function AdminClasses() {
           <h1 className="text-2xl font-bold text-gray-900">إدارة الصفوف</h1>
           <p className="text-gray-500 mt-1">إنشاء وتعديل وحذف الصفوف الدراسية</p>
         </div>
-        <Button onClick={() => { resetForm(); setEditingClass(null); setShowCreateModal(true); }}>
-          <Plus className="w-4 h-4 mr-2" />
-          صف جديد
-        </Button>
       </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="relative flex-1 min-w-[250px]">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="البحث باسم الصف..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
-            <select
-              value={gradeFilter}
-              onChange={(e) => setGradeFilter(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent min-w-[150px]"
-            >
-              <option value="">جميع المراحل</option>
-              {grades.map(g => <option key={g} value={g}>الصف {g}</option>)}
-            </select>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Classes Grid */}
       {loading ? (
@@ -252,7 +221,7 @@ export default function AdminClasses() {
                           <h3 className="font-semibold text-gray-900">{cls.name}</h3>
                           <div className="flex items-center gap-2">
                             <Badge variant="primary" size="sm">الصف {cls.grade}</Badge>
-                            <Badge variant="gray" size="sm">شعبة {cls.section}</Badge>
+                            
                           </div>
                         </div>
                       </div>
@@ -313,7 +282,7 @@ export default function AdminClasses() {
             error={errors.name}
             placeholder="مثال: الصف الأول، القسم أ"
           />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <Input
               label="المرحلة"
               name="grade"
@@ -328,15 +297,6 @@ export default function AdminClasses() {
                 {grades.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
             </Input>
-            <Input
-              label="الشعبة"
-              name="section"
-              value={values.section}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.section}
-              placeholder="أ، ب، ج..."
-            />
             <Input
               label="المدرس المسؤول"
               name="teacherId"
@@ -369,7 +329,7 @@ export default function AdminClasses() {
             onBlur={handleBlur}
             error={errors.name}
           />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <Input
               label="المرحلة"
               name="grade"
@@ -384,14 +344,6 @@ export default function AdminClasses() {
                 {grades.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
             </Input>
-            <Input
-              label="الشعبة"
-              name="section"
-              value={values.section}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.section}
-            />
             <Input
               label="المدرس المسؤول"
               name="teacherId"

@@ -9,15 +9,38 @@ import Input from '../components/ui/Input';
 import { useForm } from '../hooks/useForm';
 import { 
   User, Mail, Phone, Lock, Shield, Settings, 
-  Camera, Save, AlertCircle, CheckCircle, Eye, EyeOff
+  Camera, Save, AlertCircle, CheckCircle, Eye, EyeOff, Trash2, Download
 } from 'lucide-react';
 import { getRoleLabel, getRoleColor, cn, generateAvatarColor, getInitials } from '../utils/helpers';
 
 export default function Profile() {
-  const { user, updateProfile, changePassword, refreshUser } = useAuth();
+  const { user, updateProfile, changePassword, deleteAccount, refreshUser, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [childClassId, setChildClassId] = useState(user?.childrenClassIds?.[0] || '');
+  const [savingClass, setSavingClass] = useState(false);
+
+  useEffect(() => {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    setIsStandalone(isPWA);
+    const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+  };
 
   // Profile form
   const { 
@@ -93,18 +116,45 @@ export default function Profile() {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 500000) {
+        alert('حجم الصورة يجب أن يكون أقل من 500 كيلوبايت');
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setAvatarPreview(event.target.result);
+      reader.onload = async (event) => {
+        const base64 = event.target.result;
+        setAvatarPreview(base64);
+        try {
+          await updateProfile({ avatar: base64 });
+          refreshUser();
+        } catch (err) {
+          console.error('Failed to save avatar:', err);
+        }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setDeleteError('كلمة المرور مطلوبة');
+      return;
+    }
+    try {
+      setDeleting(true);
+      setDeleteError('');
+      await deleteAccount(deletePassword);
+      logout();
+    } catch (err) {
+      setDeleteError(err.response?.data?.error || 'كلمة المرور غير صحيحة');
+    } finally {
+      setDeleting(false);
     }
   };
 
   const tabs = [
     { id: 'profile', label: 'الملف الشخصي', icon: User },
     { id: 'security', label: 'الأمان وكلمة المرور', icon: Shield },
-    { id: 'preferences', label: 'التفضيلات', icon: Settings },
   ];
 
   return (
@@ -163,7 +213,7 @@ export default function Profile() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'profile' && (
+      {activeTab === 'profile' && (<>
         <Card>
           <CardHeader>
             <CardTitle>معلومات الحساب</CardTitle>
@@ -206,7 +256,69 @@ export default function Profile() {
             </div>
           </form>
         </Card>
-      )}
+
+        {user?.role === 'PARENT' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>صف ابنك</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-500">اختر الصف الدراسي لطفلك لرؤية الواجبات والإشعارات الخاصة به</p>
+              <select
+                value={childClassId}
+                onChange={(e) => setChildClassId(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white cursor-pointer"
+              >
+                <option value="">اختر الصف</option>
+                <option value="first-intermediate">الأول متوسط</option>
+                <option value="second-intermediate">الثاني متوسط</option>
+                <option value="third-intermediate">الثالث متوسط</option>
+                <option value="fourth-prep">الرابع إعدادي</option>
+                <option value="fifth-prep">الخامس إعدادي</option>
+                <option value="sixth-prep">السادس إعدادي</option>
+              </select>
+              <Button
+                onClick={async () => {
+                  setSavingClass(true);
+                  try {
+                    const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+                    await fetch(`${API_BASE_URL}/auth/update-child-class`, {
+                      method: 'PUT',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ classId: childClassId || null })
+                    });
+                    if (refreshUser) await refreshUser();
+                  } catch (e) {
+                    console.error(e);
+                  } finally {
+                    setSavingClass(false);
+                  }
+                }}
+                loading={savingClass}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                حفظ الصف
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-red-600">حذف الحساب</h3>
+                <p className="text-xs text-gray-500 mt-1">حذف حسابك وجميع بياناتك نهائياً</p>
+              </div>
+              <Button variant="danger" onClick={() => setShowDeleteModal(true)} size="sm">
+                <Trash2 className="w-4 h-4 mr-1" />
+                حذف
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </>)}
 
       {activeTab === 'security' && (
         <Card>
@@ -281,58 +393,29 @@ export default function Profile() {
         </Card>
       )}
 
-      {activeTab === 'preferences' && (
-        <Card>
+      {activeTab === 'security' && (
+        <Card className="border-red-200">
           <CardHeader>
-            <CardTitle>التفضيلات والإشعارات</CardTitle>
+            <CardTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              حذف الحساب
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-4">إعدادات الإشعارات</h4>
-              <div className="space-y-4">
-                {[
-                  { id: 'emailNotifications', label: 'إشعارات البريد الإلكتروني', desc: 'استلام إشعارات عبر البريد الإلكتروني' },
-                  { id: 'pushNotifications', label: 'إشعارات المتصفح', desc: 'إظهار إشعارات على سطح المكتب' },
-                  { id: 'messageNotifications', label: 'إشعارات الرسائل', desc: 'تنبيه عند وصول رسالة جديدة' },
-                  { id: 'assignmentNotifications', label: 'إشعارات الواجبات', desc: 'تنبيه عند إضافة واجب جديد أو موعد تسليم' },
-                  { id: 'gradeNotifications', label: 'إشعارات الدرجات', desc: 'تنبيه عند نشر درجة جديدة' },
-                ].map(pref => (
-                  <label key={pref.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                    <div>
-                      <p className="font-medium text-gray-900">{pref.label}</p>
-                      <p className="text-sm text-gray-500">{pref.desc}</p>
-                    </div>
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                  </label>
-                ))}
-              </div>
+          <CardContent>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <p className="text-red-700 text-sm font-medium">تنبيه: هذا الإجراء لا يمكن التراجع عنه</p>
+              <p className="text-red-600 text-sm mt-1">
+                سيتم حذف حسابك وجميع بياناتك نهائياً. يرجى التأكد قبل المتابعة.
+              </p>
             </div>
-            
-            <div className="pt-6 border-t border-gray-100">
-              <h4 className="font-medium text-gray-900 mb-4">اللغة والمنطقة</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="اللغة"
-                  placeholder="العربية"
-                >
-                  <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer" disabled>
-                    <option value="ar">العربية</option>
-                  </select>
-                </Input>
-                <Input
-                  label="المنطقة الزمنية"
-                  placeholder="Asia/Baghdad"
-                >
-                  <select className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer" disabled>
-                    <option value="Asia/Baghdad">بغداد (UTC+3)</option>
-                  </select>
-                </Input>
-              </div>
-            </div>
+            <Button
+              variant="danger"
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full sm:w-auto"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              حذف الحساب
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -365,6 +448,94 @@ export default function Profile() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">حذف الحساب</h3>
+            </div>
+            <p className="text-gray-600 mb-4">
+              أدخل كلمة المرور للتأكيد. هذا الإجراء لا يمكن التراجع عنه.
+            </p>
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {deleteError}
+              </div>
+            )}
+            <input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="أدخل كلمة المرور"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 mb-4"
+            />
+            <div className="flex gap-3">
+              <Button
+                variant="danger"
+                onClick={handleDeleteAccount}
+                loading={deleting}
+                className="flex-1"
+              >
+                نعم، حذف الحساب
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => { setShowDeleteModal(false); setDeletePassword(''); setDeleteError(''); }}
+                className="flex-1"
+              >
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Install App Section - Web only */}
+      {!isStandalone && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="w-5 h-5 text-primary-600" />
+              تثبيت التطبيق
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {deferredPrompt ? (
+              <Button onClick={handleInstall} className="w-full">
+                <Download className="w-4 h-4 mr-2" />
+                تثبيت الآن
+              </Button>
+            ) : (
+              <>
+                <p className="text-gray-600 text-sm">ثبّت التطبيق على جهازك للوصول السريع والعمل بلا انترنت</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="font-medium text-gray-900 text-sm mb-2">Android / كمبيوتر</p>
+                    <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                      <li>افتح الموقع في Chrome</li>
+                      <li>اضغط ⋮ (النقاط الثلاث)</li>
+                      <li>اختر "تثبيت" أو "تثبيت الصفحة كتطبيق"</li>
+                    </ol>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="font-medium text-gray-900 text-sm mb-2">iPhone / iPad</p>
+                    <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                      <li>افتح الموقع في Safari</li>
+                      <li>اضغط زر المشاركة ↗️</li>
+                      <li>اختر "إضافة إلى الشاشة الرئيسية"</li>
+                    </ol>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

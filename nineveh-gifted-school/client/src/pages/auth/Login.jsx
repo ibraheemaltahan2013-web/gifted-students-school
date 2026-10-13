@@ -12,6 +12,7 @@ export default function Login() {
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const { values, errors, handleChange, handleBlur, handleSubmit, setFieldError } = useForm({
     initialValues: { email: '', password: '' },
@@ -25,6 +26,7 @@ export default function Login() {
     onSubmit: async (formValues) => {
       try {
         setError('');
+        setSubmitting(true);
         await login(formValues);
         navigate('/dashboard');
       } catch (err) {
@@ -32,6 +34,8 @@ export default function Login() {
         if (err.response?.data?.details) {
           err.response.data.details.forEach(d => setFieldError(d.field, d.message));
         }
+      } finally {
+        setSubmitting(false);
       }
     }
   });
@@ -87,18 +91,8 @@ export default function Login() {
             </button>
           </div>
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-              <span className="text-sm text-gray-600">تذكرني</span>
-            </label>
-            <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
-              نسيت كلمة المرور؟
-            </Link>
-          </div>
-
-          <Button type="submit" className="w-full" size="lg">
-            دخول
+          <Button type="submit" className="w-full" size="lg" loading={submitting} disabled={submitting}>
+            {submitting ? 'جاري تسجيل الدخول...' : 'دخول'}
           </Button>
         </form>
 

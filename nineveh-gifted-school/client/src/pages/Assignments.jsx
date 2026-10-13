@@ -25,10 +25,13 @@ export default function Assignments() {
   const [totalPages, setTotalPages] = useState(1);
   const [filter, setFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   const { values, errors, handleChange, handleBlur, handleSubmit, resetForm, setFieldError, setValues } = useForm({
-    initialValues: { title: '', description: '', classId: '', dueDate: '', maxScore: 100, attachments: [] },
+    initialValues: { title: '', description: '', classId: '', dueDate: '', attachments: [] },
     validate: (values) => {
       const errs = {};
       if (!values.title.trim()) errs.title = 'العنوان مطلوب';
@@ -40,7 +43,7 @@ export default function Assignments() {
     onSubmit: async (formValues) => {
       try {
         setCreating(true);
-        await assignmentAPI.create(formValues);
+        await assignmentAPI.create({ ...formValues, maxScore: 100 });
         setShowCreateModal(false);
         resetForm();
         loadAssignments();
@@ -62,7 +65,11 @@ export default function Assignments() {
   const loadAssignments = async () => {
     try {
       setLoading(true);
-      const res = await assignmentAPI.getAll({ page, limit: 10 });
+      const params = { page, limit: 10 };
+      if (user.role === 'STUDENT' && user.classId) {
+        params.classId = user.classId;
+      }
+      const res = await assignmentAPI.getAll(params);
       setAssignments(res.data.assignments || []);
       setTotalPages(res.data.totalPages || 1);
     } catch (error) {
@@ -74,7 +81,7 @@ export default function Assignments() {
 
   const loadClasses = async () => {
     try {
-      const res = await classAPI.getMyClasses();
+      const res = await classAPI.getAll();
       setClasses(res.data.classes || []);
     } catch (error) {
       console.error('Failed to load classes:', error);
@@ -91,11 +98,38 @@ export default function Assignments() {
     }
   };
 
+  const openEditModal = (assignment) => {
+    setEditingAssignment(assignment);
+    setValues({
+      title: assignment.title,
+      description: assignment.description,
+      classId: assignment.classId,
+      dueDate: assignment.dueDate ? assignment.dueDate.split('T')[0] : '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async (formValues) => {
+    try {
+      setUpdating(true);
+      await assignmentAPI.update(editingAssignment.id, formValues);
+      setShowEditModal(false);
+      setEditingAssignment(null);
+      resetForm();
+      loadAssignments();
+    } catch (err) {
+      if (err.response?.data?.details) {
+        err.response.data.details.forEach(d => setFieldError(d.field, d.message));
+      }
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const canCreate = user.role === 'TEACHER' || user.role === 'ADMIN';
 
   const filteredAssignments = assignments.filter(a => {
     if (filter === 'pending') return a._count?.submissions === 0;
-    if (filter === 'submitted') return a._count?.submissions > 0;
     if (filter === 'overdue') return new Date(a.dueDate) < new Date();
     return true;
   });
@@ -121,7 +155,6 @@ export default function Assignments() {
         {[
           { value: 'all', label: 'الكل' },
           { value: 'pending', label: 'في الانتظار' },
-          { value: 'submitted', label: 'مُسلمة' },
           { value: 'overdue', label: 'متأخرة' }
         ].map(f => (
           <button
@@ -201,12 +234,11 @@ export default function Assignments() {
                             assignment._count?.submissions > 0 ? 'SUBMITTED' : 'PENDING'
                           )}
                         </Badge>
-                        <span className="text-sm text-gray-500">
-                          {assignment._count?.submissions || 0} تسليم
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          من {assignment.maxScore} درجة
-                        </span>
+                        {assignment.teacher?.fullName && (
+                          <span className="text-sm text-gray-400">
+                            by {assignment.teacher.fullName}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -215,7 +247,7 @@ export default function Assignments() {
                       </Link>
                       {canCreate && (
                         <>
-                          <button className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="تعديل">
+                          <button onClick={() => openEditModal(assignment)} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="تعديل">
                             <Edit className="w-5 h-5" />
                           </button>
                           <button onClick={() => handleDelete(assignment.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="حذف">
@@ -282,12 +314,12 @@ export default function Assignments() {
             >
               <select name="classId" value={values.classId} onChange={handleChange} onBlur={handleBlur} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer">
                 <option value="">اختر الصف</option>
-                {classes.map(c => <option key={c.id} value={c.id}>{c.name} (الصف {c.grade} - {c.section})</option>)}
+                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </Input>
             <Input
               label="تاريخ التسليم"
-              type="datetime-local"
+              type="date"
               name="dueDate"
               value={values.dueDate}
               onChange={handleChange}
@@ -295,18 +327,66 @@ export default function Assignments() {
               error={errors.dueDate}
             />
           </div>
-          <Input
-            label="الدرجة العظمى"
-            type="number"
-            name="maxScore"
-            value={values.maxScore}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="100"
-          />
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>إلغاء</Button>
             <Button type="submit" loading={creating}>حفظ</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Assignment Modal */}
+      <Modal isOpen={showEditModal} onClose={() => { setShowEditModal(false); setEditingAssignment(null); }} title="تعديل الواجب" size="lg">
+        <form onSubmit={(e) => { e.preventDefault(); handleUpdate(values); }} className="space-y-4">
+          <Input
+            label="العنوان"
+            name="title"
+            value={values.title}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.title}
+            placeholder="مثال: واجب الرياضيات - الوحدة الأولى"
+          />
+          <div>
+            <label className="label">الوصف</label>
+            <textarea
+              name="description"
+              value={values.description}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              rows={4}
+              className={cn('input min-h-[100px] resize-y', errors.description && 'border-red-500 focus:ring-red-500')}
+              placeholder="تعليمات الواجب والتفاصيل..."
+            />
+            {errors.description && <p className="mt-1 text-sm text-red-600" role="alert">{errors.description}</p>}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="الصف"
+              name="classId"
+              value={values.classId}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={errors.classId}
+              placeholder="اختر الصف"
+            >
+              <select name="classId" value={values.classId} onChange={handleChange} onBlur={handleBlur} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white cursor-pointer">
+                <option value="">اختر الصف</option>
+                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </Input>
+            <Input
+              label="تاريخ التسليم"
+              type="date"
+              name="dueDate"
+              value={values.dueDate}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={errors.dueDate}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="secondary" onClick={() => { setShowEditModal(false); setEditingAssignment(null); }}>إلغاء</Button>
+            <Button type="submit" loading={updating}>حفظ التغييرات</Button>
           </div>
         </form>
       </Modal>

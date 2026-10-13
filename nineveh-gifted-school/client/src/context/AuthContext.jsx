@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (data) => {
-    const result = await authAPI.register(data);
+    const { data: result } = await authAPI.register(data);
     setUser(result.user);
     return result;
   };
@@ -49,7 +49,12 @@ export function AuthProvider({ children }) {
     return authAPI.changePassword(data);
   };
 
-  const value = { user, loading, login, register, logout, updateProfile, changePassword, refreshUser: fetchUser };
+  const deleteAccount = async (password) => {
+    await authAPI.deleteAccount(password);
+    setUser(null);
+  };
+
+  const value = { user, loading, login, register, logout, updateProfile, changePassword, deleteAccount, refreshUser: fetchUser };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
